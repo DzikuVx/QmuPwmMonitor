@@ -9,82 +9,102 @@ volatile long channel_length[] = {0, 0, 0, 0, 0, 0};
 
 long smooth_channel_length[] = {0, 0, 0, 0, 0, 0};
 
+#define DIGITAL_CHANNEL_COUNT 6
+const byte digitalInputPins[DIGITAL_CHANNEL_COUNT] = {5, 18, 23, 19, 22, 21};
+volatile uint8_t digitalChannelValues[DIGITAL_CHANNEL_COUNT] = {0};
+
 int32_t smooth(uint32_t data, float filterVal, float smoothedVal)
 {
-    if (filterVal > 1)
-    {
-        filterVal = .99;
-    }
-    else if (filterVal <= 0)
-    {
-        filterVal = 0;
-    }
+  if (filterVal > 1)
+  {
+    filterVal = .99;
+  }
+  else if (filterVal <= 0)
+  {
+    filterVal = 0;
+  }
 
-    smoothedVal = (data * (1 - filterVal)) + (smoothedVal * filterVal);
+  smoothedVal = (data * (1 - filterVal)) + (smoothedVal * filterVal);
 
-    return (uint32_t)smoothedVal;
+  return (uint32_t)smoothedVal;
 }
 
-void processPin(byte pin) {
+void processPin(byte pin)
+{
 
-    uint8_t state = digitalRead(channel_pin[pin]);
+  uint8_t state = digitalRead(channel_pin[pin]);
 
-    if (state == HIGH) {
-        rising_start[pin] = micros();
-    } else if (state == LOW) {
-        channel_length[pin] = micros() - rising_start[pin];
-    }
+  if (state == HIGH)
+  {
+    rising_start[pin] = micros();
+  }
+  else if (state == LOW)
+  {
+    channel_length[pin] = micros() - rising_start[pin];
+  }
 }
 
-void onRising0(void) {
+void onRising0(void)
+{
   processPin(0);
 }
 
-void onRising1(void) {
+void onRising1(void)
+{
   processPin(1);
 }
 
-void onRising2(void) {
+void onRising2(void)
+{
   processPin(2);
 }
 
-void onRising3(void) {
+void onRising3(void)
+{
   processPin(3);
 }
 
-void onRising4(void) {
+void onRising4(void)
+{
   processPin(4);
 }
 
-void onRising5(void) {
+void onRising5(void)
+{
   processPin(5);
 }
 
 void setup()
 {
 
-    pinMode(16, OUTPUT);
-    digitalWrite(16, LOW); // set GPIO16 low to reset OLED
-    delay(50);
-    digitalWrite(16, HIGH); // while OLED is running, must set GPIO16 to high
-    Wire.begin(4, 15);
+  pinMode(16, OUTPUT);
+  digitalWrite(16, LOW); // set GPIO16 low to reset OLED
+  delay(50);
+  digitalWrite(16, HIGH); // while OLED is running, must set GPIO16 to high
+  Wire.begin(4, 15);
 
-    display.init();
-    display.flipScreenVertically();
-    display.setFont(ArialMT_Plain_10);
+  display.init();
+  display.flipScreenVertically();
+  display.setFont(ArialMT_Plain_10);
 
-    pinMode(channel_pin[0], INPUT);
-    pinMode(channel_pin[1], INPUT);
-    pinMode(channel_pin[2], INPUT);
-    pinMode(channel_pin[3], INPUT);
-    pinMode(channel_pin[4], INPUT);
-    pinMode(channel_pin[5], INPUT);
-    attachInterrupt(digitalPinToInterrupt(channel_pin[0]), onRising0, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(channel_pin[1]), onRising1, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(channel_pin[2]), onRising2, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(channel_pin[3]), onRising3, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(channel_pin[4]), onRising4, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(channel_pin[5]), onRising5, CHANGE);
+  pinMode(channel_pin[0], INPUT);
+  pinMode(channel_pin[1], INPUT);
+  pinMode(channel_pin[2], INPUT);
+  pinMode(channel_pin[3], INPUT);
+  pinMode(channel_pin[4], INPUT);
+  pinMode(channel_pin[5], INPUT);
+  attachInterrupt(digitalPinToInterrupt(channel_pin[0]), onRising0, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(channel_pin[1]), onRising1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(channel_pin[2]), onRising2, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(channel_pin[3]), onRising3, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(channel_pin[4]), onRising4, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(channel_pin[5]), onRising5, CHANGE);
+
+  //Digital Input channels
+  for (uint8_t i = 0; i < DIGITAL_CHANNEL_COUNT; i++) {
+    pinMode(digitalInputPins[i], INPUT_PULLUP);
+  }
+
 }
 
 #define TASK_PERIOD_OLED 100
@@ -96,26 +116,35 @@ uint32_t nextSmoothTask = 0;
 void loop()
 {
 
-    if (millis() > nextSmoothTask) {
-        for (uint8_t i = 0; i < PWM_CHANNEL_COUNT; i++) {
-            smooth_channel_length[i] = smooth(channel_length[i], 0.5, smooth_channel_length[i]);
-        }
-
-        nextSmoothTask = millis() + TASK_SMOOTH_PERIOD;
+  if (millis() > nextSmoothTask)
+  {
+    for (uint8_t i = 0; i < PWM_CHANNEL_COUNT; i++)
+    {
+      smooth_channel_length[i] = smooth(channel_length[i], 0.5, smooth_channel_length[i]);
     }
 
-    if (millis() > nextOledTask) {
+    nextSmoothTask = millis() + TASK_SMOOTH_PERIOD;
+  }
 
-        display.clear();
-        display.drawString(0, 0, "S1: " + String(smooth_channel_length[0]));
-        display.drawString(0, 10, "S2: " + String(smooth_channel_length[1]));
-        display.drawString(0, 20, "S3: " + String(smooth_channel_length[2]));
-        display.drawString(0, 30, "S4: " + String(smooth_channel_length[3]));
-        display.drawString(0, 40, "S5: " + String(smooth_channel_length[4]));
-        display.drawString(0, 50, "S6: " + String(smooth_channel_length[5]));
-        display.display();
+  if (millis() > nextOledTask)
+  {
+    display.clear();
 
-        nextOledTask = millis() + TASK_PERIOD_OLED;
-
+    //Digital Input channels
+    for (uint8_t i = 0; i < DIGITAL_CHANNEL_COUNT; i++) {
+      digitalChannelValues[i] = digitalRead(digitalInputPins[i]);
+      display.drawString(64, 0 + (i * 10), "D1: " + String(digitalChannelValues[i]));
     }
+
+    
+    display.drawString(0, 0, "S1: " + String(smooth_channel_length[0]));
+    display.drawString(0, 10, "S2: " + String(smooth_channel_length[1]));
+    display.drawString(0, 20, "S3: " + String(smooth_channel_length[2]));
+    display.drawString(0, 30, "S4: " + String(smooth_channel_length[3]));
+    display.drawString(0, 40, "S5: " + String(smooth_channel_length[4]));
+    display.drawString(0, 50, "S6: " + String(smooth_channel_length[5]));
+    display.display();
+
+    nextOledTask = millis() + TASK_PERIOD_OLED;
+  }
 }
