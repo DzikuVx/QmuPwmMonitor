@@ -133,10 +133,9 @@ void loop()
     //Digital Input channels
     for (uint8_t i = 0; i < DIGITAL_CHANNEL_COUNT; i++) {
       digitalChannelValues[i] = digitalRead(digitalInputPins[i]);
-      display.drawString(64, 0 + (i * 10), "D1: " + String(digitalChannelValues[i]));
+      display.drawString(64, 0 + (i * 10), "D" + String(i + 1) + ": " + String(digitalChannelValues[i]));
     }
 
-    
     display.drawString(0, 0, "S1: " + String(smooth_channel_length[0]));
     display.drawString(0, 10, "S2: " + String(smooth_channel_length[1]));
     display.drawString(0, 20, "S3: " + String(smooth_channel_length[2]));
