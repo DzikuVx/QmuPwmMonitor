@@ -74,6 +74,11 @@ void setup()
     display.setFont(ArialMT_Plain_10);
 
     pinMode(channel_pin[0], INPUT);
+    pinMode(channel_pin[1], INPUT);
+    pinMode(channel_pin[2], INPUT);
+    pinMode(channel_pin[3], INPUT);
+    pinMode(channel_pin[4], INPUT);
+    pinMode(channel_pin[5], INPUT);
     attachInterrupt(digitalPinToInterrupt(channel_pin[0]), onRising0, CHANGE);
     attachInterrupt(digitalPinToInterrupt(channel_pin[1]), onRising1, CHANGE);
     attachInterrupt(digitalPinToInterrupt(channel_pin[2]), onRising2, CHANGE);
