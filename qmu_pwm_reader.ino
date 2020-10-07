@@ -101,10 +101,10 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(channel_pin[5]), onRising5, CHANGE);
 
   //Digital Input channels
-  for (uint8_t i = 0; i < DIGITAL_CHANNEL_COUNT; i++) {
+  for (uint8_t i = 0; i < DIGITAL_CHANNEL_COUNT; i++)
+  {
     pinMode(digitalInputPins[i], INPUT_PULLUP);
   }
-
 }
 
 #define TASK_PERIOD_OLED 100
@@ -112,6 +112,21 @@ void setup()
 
 uint32_t nextOledTask = 0;
 uint32_t nextSmoothTask = 0;
+
+void printChannel(uint8_t channel, long value)
+{
+
+  uint8_t pos = channel * 10;
+  String formattedValue;
+
+  if (value > 2500 || value < 100) {
+    formattedValue = "NaN";
+  } else {
+    formattedValue = String(value);
+  }
+
+  display.drawString(0, pos, "S" + String(channel + 1) + ": " + formattedValue);
+}
 
 void loop()
 {
@@ -131,17 +146,19 @@ void loop()
     display.clear();
 
     //Digital Input channels
-    for (uint8_t i = 0; i < DIGITAL_CHANNEL_COUNT; i++) {
+    for (uint8_t i = 0; i < DIGITAL_CHANNEL_COUNT; i++)
+    {
       digitalChannelValues[i] = digitalRead(digitalInputPins[i]);
       display.drawString(64, 0 + (i * 10), "D" + String(i + 1) + ": " + String(digitalChannelValues[i]));
     }
 
-    display.drawString(0, 0, "S1: " + String(smooth_channel_length[0]));
-    display.drawString(0, 10, "S2: " + String(smooth_channel_length[1]));
-    display.drawString(0, 20, "S3: " + String(smooth_channel_length[2]));
-    display.drawString(0, 30, "S4: " + String(smooth_channel_length[3]));
-    display.drawString(0, 40, "S5: " + String(smooth_channel_length[4]));
-    display.drawString(0, 50, "S6: " + String(smooth_channel_length[5]));
+    printChannel(0, smooth_channel_length[0]);
+    printChannel(1, smooth_channel_length[1]);
+    printChannel(2, smooth_channel_length[2]);
+    printChannel(3, smooth_channel_length[3]);
+    printChannel(4, smooth_channel_length[4]);
+    printChannel(5, smooth_channel_length[5]);
+
     display.display();
 
     nextOledTask = millis() + TASK_PERIOD_OLED;
